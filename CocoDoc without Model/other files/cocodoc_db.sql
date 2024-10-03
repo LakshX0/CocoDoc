@@ -1,1 +1,0 @@
-SELECT * FROM cocodoc_db.admin_cred;
