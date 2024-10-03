@@ -6,9 +6,23 @@ import tensorflow as tf
 import json
 import mysql.connector
 from mysql.connector import Error
+import gdown
+import os
 
 # Load the model
 model_path = "trained_model/cocodoc_model.keras"  # Ensure the model path is correct
+model = tf.keras.models.load_model(model_path)
+
+# Google Drive file ID and link (use the ID from your Google Drive shareable link)
+file_id = "1--9gO-E-XsoybOvvuA8LxnT7VkY88I75"  # Replace with actual file ID
+download_url = f"https://drive.google.com/uc?id={file_id}"
+
+# Check if model file exists, if not download it
+if not os.path.exists(model_path):
+    st.write("Model not found locally. Downloading from Google Drive...")
+    gdown.download(download_url, model_path, quiet=False)
+    
+# Load the downloaded model
 model = tf.keras.models.load_model(model_path)
 
 # Load class indices
