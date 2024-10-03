@@ -1,0 +1,78 @@
+import streamlit as st
+from PIL import Image
+import numpy as np
+import time
+import tensorflow as tf
+import json
+
+# Load the model
+model_path = "trained_model/cocodoc_model.keras"  # Ensure the model path is correct
+model = tf.keras.models.load_model(model_path)
+
+# Load class indices
+with open("trained_model/class_indices2.json") as json_file:
+    class_indices = json.load(json_file)
+
+# Reverse the class indices for easier lookup
+class_indices_rev = {v: k for k, v in class_indices.items()}
+
+def preprocess_image(image):
+    """Preprocess the uploaded image for prediction."""
+    # Resize the image to the size the model expects (adjust if necessary)
+    image = image.resize((224, 224))  # Change to the input size your model requires
+    image_array = np.array(image) / 255.0  # Scale pixel values to [0, 1]
+    image_array = np.expand_dims(image_array, axis=0)  # Add batch dimension
+    return image_array
+
+def render():
+    st.title("Coconut Leaf Disease Prediction")
+
+    st.write("""
+    Upload an image of a coconut leaf to predict potential diseases.
+    Make sure the image is clear and properly oriented for better results.
+    """)
+
+    # Example form for prediction input
+    with st.form(key='prediction_form'):
+        st.subheader("Upload Leaf Image for Prediction")
+
+        # Upload image
+        leaf_image = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
+        if leaf_image:
+            image = Image.open(leaf_image)
+            st.image(image, caption='Uploaded Image.', use_column_width=True)
+
+        # Submit button
+        submit_button = st.form_submit_button("Predict")
+
+        if submit_button:
+            if leaf_image:
+                st.write("Processing your prediction...")
+                time.sleep(2)  # Simulate a processing delay
+
+                # Preprocess the image
+                processed_image = preprocess_image(image)
+
+                # Make prediction
+                predictions = model.predict(processed_image)
+                predicted_class_index = np.argmax(predictions[0])  # Get index of the highest score
+
+                # Debugging print statements
+                st.write("Predictions:", predictions)
+                st.write("Predicted class index:", predicted_class_index)
+
+                predicted_class = class_indices_rev.get(predicted_class_index, "Unknown")
+
+                # Check if the predicted class is a coconut leaf disease
+                
+                # Define a list of valid coconut leaf disease class prefixes
+                valid_disease_classes = ['WCLWD', 'CCI', 'Healthy Leaves']  # Include all relevant class prefixes or names
+
+                    # Check if the predicted class is a coconut leaf disease
+                if any(predicted_class.startswith(prefix) for prefix in valid_disease_classes):
+                        st.success(f"Predicted disease for leaf is: **{predicted_class}**")
+                else:
+                        st.warning("You provided a non-coconut leaf image. Please upload a valid coconut leaf image.")
+            else:
+                st.warning("Please upload a leaf image for prediction.")
+
